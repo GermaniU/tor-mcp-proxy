@@ -53,7 +53,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "tough-cookie": "^6.0.2",
     "undici": "^8.11.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
