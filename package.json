@@ -1,0 +1,53 @@
+{
+  "name": "tor-mcp-proxy",
+  "version": "0.3.0",
+  "private": true,
+  "description": "MCP server that gives AI assistants web access through Tor: per-call circuit isolation, .onion support, no DNS leaks, automatic retries on blocked exit nodes.",
+  "type": "module",
+  "author": "GermaniU",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GermaniU/tor-mcp-proxy.git"
+  },
+  "homepage": "https://github.com/GermaniU/tor-mcp-proxy#readme",
+  "bugs": {
+    "url": "https://github.com/GermaniU/tor-mcp-proxy/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "tor",
+    "onion",
+    "socks5",
+    "proxy",
+    "privacy",
+    "claude"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "bin": {
+    "tor-mcp-proxy": "index.js"
+  },
+  "files": [
+    "index.js",
+    "lib/",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "check": "node scripts/check-syntax.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "list-tools": "node scripts/list-tools.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "tough-cookie": "^6.0.2",
+    "undici": "^8.11.2",
+    "zod": "^4.4.3"
+  }
+}

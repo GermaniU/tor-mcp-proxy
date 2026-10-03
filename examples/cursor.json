@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tor-proxy": {
+      "command": "node",
+      "args": ["/absolute/path/to/tor-mcp-proxy/index.js"]
+    }
+  }
+}

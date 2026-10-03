@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+
+# Local runtime output
+downloads/
+*.log
+
+# Personal AI-assistant workspace files — never publish these
+AGENTS.md
+SOUL.md
+IDENTITY.md
+USER.md
+MEMORY.md
+BOOTSTRAP.md
+memory/

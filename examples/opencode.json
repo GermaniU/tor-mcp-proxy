@@ -1,0 +1,8 @@
+{
+  "mcp": {
+    "tor-proxy": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/tor-mcp-proxy/index.js"]
+    }
+  }
+}
