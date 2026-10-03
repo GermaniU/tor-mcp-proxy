@@ -1,55 +1,72 @@
-# Security and privacy
+# Seguridad y privacidad
 
-This page explains what `tor-mcp-proxy` protects against, what it does not protect against, and how to report a vulnerability.
+Este documento explica qué protege `tor-mcp-proxy`, qué **no** protege y cómo reportar una vulnerabilidad.
 
-## Threat model
+*English summary: report vulnerabilities privately via the repository's **Security → Report a vulnerability** tab. Do not open public issues for security problems.*
 
-### What it protects
+---
 
-| Risk | How it is handled |
+## Modelo de amenazas
+
+### Lo que protege
+
+| Riesgo | Cómo se mitiga |
 |---|---|
-| Sites learn your real IP address | All traffic goes through the Tor SOCKS5 proxy. There is no direct fallback. |
-| Your ISP or DNS resolver learns which sites you visit | Hostnames are passed to Tor unresolved, and no local DNS lookups are made by default (`TOR_LOCAL_DNS_CHECK=false`). |
-| Different tool calls get linked through a shared circuit | Each call uses a random SOCKS identity. Tor's `IsolateSOCKSAuth` (on by default) then gives it its own circuit. |
-| Cookies from one site reach another site | In sessions, cookies are stored per domain and path with [tough-cookie](https://github.com/salesforce/tough-cookie), following RFC 6265 and the Public Suffix List. |
-| A `.onion` site redirects you to a clearnet site | Redirects from `.onion` to a clearnet host are blocked at every hop. |
-| SSRF: the AI is tricked into requesting your LAN or cloud metadata | Literal private, loopback, link-local and metadata IPs and local hostnames are rejected. Through Tor, hostnames are resolved by the exit relay, and Tor refuses connections to internal addresses. |
-| Downloads overwrite your files or plant code | Files are written only inside `TOR_DOWNLOAD_DIR`. Existing files are never overwritten. Paths containing `..`, hidden files, absolute paths and symlink escapes are refused. Executables, HTML and SVG are rejected. |
-| Huge responses exhaust memory | Bodies are streamed and aborted once they pass the configured limit. |
+| Los sitios conocen tu IP real | Todo el tráfico va por el proxy SOCKS5 de Tor. No existe ningún fallback directo. |
+| Tu ISP o tu resolver DNS ven qué sitios visitas | Los hostnames se envían a Tor sin resolver. Por defecto no se hace ninguna consulta DNS local (`TOR_LOCAL_DNS_CHECK=false`). |
+| Distintas llamadas se pueden vincular por compartir circuito | Cada llamada usa una identidad SOCKS aleatoria, y `IsolateSOCKSAuth` (activo por defecto en Tor) le asigna su propio circuito. |
+| Las cookies de un sitio llegan a otro | En las sesiones, [tough-cookie](https://github.com/salesforce/tough-cookie) guarda las cookies separadas por dominio y ruta (RFC 6265 y Public Suffix List). |
+| Un `.onion` te redirige a clearnet | Se bloquea cualquier redirección de `.onion` a clearnet, en cada salto. |
+| SSRF: engañan a la IA para que consulte tu red local o la metadata de tu nube | Se rechazan las IPs literales privadas, de loopback, link-local y de metadata, y los hostnames locales. Además, a través de Tor los hostnames los resuelve el nodo de salida, que rechaza las direcciones internas. |
+| Una descarga sobrescribe tus archivos o planta código | Solo se escribe dentro de `TOR_DOWNLOAD_DIR`. Nunca se sobrescriben archivos, y se rechazan las rutas con `..`, los archivos ocultos, las rutas absolutas y los symlinks que salen del directorio. Tampoco se aceptan ejecutables, HTML ni SVG. |
+| Respuestas enormes agotan la memoria | Los cuerpos se leen en streaming y se cortan al superar el límite configurado. |
+| HTML hostil bloquea el servidor | El análisis de HTML es lineal, sin expresiones regulares cuadráticas. |
 
-### What it does NOT protect
+### Lo que NO protege
 
-- **Anything you put in a request.** If the AI logs in with your real account or submits personal data, Tor cannot hide that.
-- **Browser fingerprinting.** The User-Agent matches Tor Browser, but the TLS and HTTP fingerprints are Node's. A site that looks closely can tell the request does not come from Tor Browser. That narrows the anonymity set, although it does not reveal your IP.
-- **Linking inside a session.** A `session_id` reuses one circuit and one cookie jar on purpose. Requests that share a session are linkable.
-- **Exit node snooping on plain HTTP.** The exit relay can read and modify unencrypted clearnet traffic. `.onion` and HTTPS traffic are end-to-end encrypted.
-- **A compromised machine or MCP client.** The server trusts whatever your MCP client sends it.
-- **Content risk.** Pages are returned to the AI as text. Treat them as untrusted input, since they may contain prompt-injection attempts.
+- **Lo que pones en la petición.** Si la IA inicia sesión con tu cuenta real o envía datos personales, Tor no puede ocultarlo.
+- **El fingerprinting.** El User-Agent es el de Tor Browser, pero la huella TLS y HTTP es la de Node.js. Un sitio que lo analice puede ver que la petición no viene de Tor Browser. Eso reduce tu conjunto de anonimato, aunque no revela tu IP.
+- **La vinculación dentro de una sesión.** Un `session_id` reutiliza a propósito el mismo circuito y las mismas cookies, así que las peticiones de una misma sesión se pueden vincular entre sí.
+- **El espionaje del nodo de salida en HTTP plano.** El nodo de salida puede leer y modificar el tráfico clearnet sin cifrar. El tráfico `.onion` y el HTTPS están cifrados de extremo a extremo.
+- **Un equipo o un cliente MCP comprometido.** El servidor confía en lo que le envía tu cliente MCP.
+- **El contenido de las páginas.** Se devuelve a la IA como texto. Trátalo como entrada no confiable, porque puede contener intentos de prompt injection.
 
-### `.onion` and TLS
+### `.onion` y TLS
 
-`.onion` addresses authenticate the server cryptographically, so HTTPS certificates for `.onion` hosts are **not** verified. Many hidden services use self-signed certificates. This relaxed TLS setting applies only to `.onion` hosts, through a separate dispatcher. Clearnet HTTPS always uses strict certificate verification.
+Las direcciones `.onion` ya autentican criptográficamente al servidor, así que **no** se verifican los certificados HTTPS de los hosts `.onion`. Muchos servicios ocultos usan certificados autofirmados. Esta relajación solo aplica a los hosts `.onion` y usa un dispatcher separado; el HTTPS de clearnet siempre se verifica de forma estricta.
 
-## Settings that weaken privacy
+---
 
-| Setting | Effect |
+## Configuración que reduce la privacidad
+
+| Ajuste | Efecto |
 |---|---|
-| `TOR_LOCAL_DNS_CHECK=true` | Each hostname is resolved by your local DNS resolver, so it is leaked. |
-| `TOR_ROTATE_IDENTITY=false` | All calls share Tor's current circuit and become linkable. |
-| `TOR_LOG_PATH=...` | Visited URLs and search queries are written to disk (file mode `0600`). |
-| `TOR_USER_AGENT=...` | A User-Agent other than Tor Browser's makes you stand out among Tor users. |
+| `TOR_LOCAL_DNS_CHECK=true` | Cada hostname se resuelve con tu DNS local y queda expuesto. |
+| `TOR_ROTATE_IDENTITY=false` | Todas las llamadas comparten el circuito actual de Tor y se pueden vincular entre sí. |
+| `TOR_LOG_PATH=...` | Las URLs visitadas y las búsquedas se guardan en disco, con permisos `0600`. |
+| `TOR_USER_AGENT=...` | Un User-Agent distinto del de Tor Browser te hace destacar entre los usuarios de Tor. |
 
-## Recommended Tor setup
+---
 
-The default `tor` package settings work. For extra safety, add these lines to your `torrc`:
+## Configuración recomendada de Tor
+
+La configuración por defecto funciona. Si quieres más seguridad, añade esto a tu `torrc`:
 
 ```
 SocksPort 127.0.0.1:9050 IsolateSOCKSAuth
 ClientRejectInternalAddresses 1
 ```
 
-Both are already Tor's defaults; setting them explicitly guards against a changed config.
+Ambas opciones ya son los valores por defecto de Tor. Fijarlas explícitamente te protege si alguien cambia la configuración.
 
-## Reporting a vulnerability
+---
 
-Please do **not** open a public issue for security problems. Use GitHub's private vulnerability reporting instead: open the **Security** tab of the repository and choose **Report a vulnerability**. Include the steps to reproduce the problem and its impact.
+## Reportar una vulnerabilidad
+
+**No abras un issue público** para problemas de seguridad. Usa el reporte privado de GitHub: ve a la pestaña **Security** del repositorio, elige **Report a vulnerability** e incluye:
+
+- los pasos para reproducirlo;
+- el impacto (qué se filtra o qué puede hacer un atacante);
+- la versión o el commit afectado.
+
+Puedes escribir en español o en inglés.

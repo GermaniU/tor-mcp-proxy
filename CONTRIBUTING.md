@@ -1,37 +1,172 @@
-# Contributing
+# Contribuir a Tor MCP Proxy
 
-Thanks for helping! Bug reports, fixes and new tools are all welcome.
+¡Gracias por querer contribuir! Esta guía explica las reglas del proyecto y el flujo de trabajo paso a paso.
 
-## Setup
+---
+
+## 🎯 Filosofía
+
+Tor MCP Proxy hace **una cosa**: traer contenido web por Tor para un agente IA, **sin comprometer la privacidad de quien lo usa**. Cada cambio se evalúa con una pregunta: *¿esto filtra algo fuera de Tor, o vincula peticiones que deberían ser independientes?* Si la respuesta es sí, el cambio no entra, o entra solo como opción explícita y documentada en [`SECURITY.md`](SECURITY.md).
+
+---
+
+## 📐 Disciplinas (no negociables)
+
+### Clean Code
+- Funciones pequeñas con nombres que se explican solos.
+- Sin código muerto ni imports sin usar. ESLint lo verifica.
+
+### SOLID (sin sobreingeniería)
+- **DIP:** las features dependen de `context.web`, nunca de `undici` ni de `process.env`.
+- Una interfaz solo existe cuando hay más de una implementación real, o cuando hace falta para testear sin red.
+
+### KISS · YAGNI
+- Nada de abstracciones especulativas.
+- Una dependencia nueva solo entra si reemplaza código de seguridad difícil de escribir bien. `tough-cookie` es el ejemplo.
+
+### Vertical slice architecture
+- Cada tool vive en `lib/features/<tool>/`, con su schema, su handler y sus helpers privados.
+- Una feature **nunca** importa otra feature.
+- Lo que usan varias features va en `lib/shared/`.
+- `test/architecture.test.js` hace cumplir estas reglas, así que la CI falla si se rompen.
+
+### Tests primero (TDD bienvenido)
+- **Sin tests no hay merge.** Toda corrección de bug trae su test de regresión.
+- Los tests corren sin Tor y sin red: usa `createTestContext()` y `startServer()` de `test/support.js`.
+
+### Comentarios
+- Explican el **por qué**, no el qué; el nombre de la función ya cuenta el qué.
+- Pueden estar en inglés o en español: elige el idioma que deje la idea más clara.
+
+---
+
+## 📝 Convenciones
+
+### Idioma
+- **Identificadores** (variables, funciones, archivos): en inglés.
+- **Documentación:** en español (`README.md`), con espejo en inglés (`README.en.md`).
+- **Commits y PRs:** en español, o en inglés si es más claro.
+- **Issues:** en el idioma que prefieras.
+
+### Conventional Commits (en español)
+
+```
+feat: añadir tool fetch_feed para RSS
+fix: no reintentar 403 dentro de una sesión
+docs: documentar TOR_USER_AGENT en INSTALL.md
+refactor: extraer parse-results de search-onion
+test: cubrir redirección 308 con cuerpo
+chore: actualizar undici a 8.12
+```
+
+Primera línea de 72 caracteres como máximo.
+
+### Pull Request
+- El título va en formato Conventional Commit.
+- Rellena la plantilla: qué cambia y por qué, y cómo lo probaste.
+- Antes de abrirlo: `npm run lint && npm run check && npm test`.
+
+---
+
+## 🛠 Setup de desarrollo
 
 ```bash
 git clone https://github.com/GermaniU/tor-mcp-proxy.git
 cd tor-mcp-proxy
 npm ci
-npm run check && npm test
+
+npm run lint        # ESLint
+npm run check       # sintaxis de todos los archivos
+npm test            # unit + integración + protocolo MCP, ~2 s, sin red
+
+# Contra Tor real (opcional, requiere Tor corriendo)
+npm run doctor
+npm run smoke
 ```
 
-The test suite runs **offline**. It uses a local HTTP server in place of Tor, so you don't need Tor running to develop. For a manual end-to-end check, start Tor and run `npm run list-tools`, or connect the server to your MCP client.
+---
 
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) describes how the code is organised: vertical slices in `lib/features/`, a shared kernel in `lib/shared/`, and the composition root in `lib/app/`.
+## 🆕 Cómo añadir una tool MCP
 
-## Guidelines
+### 1. Crea la slice
 
-The short version is in [CLAUDE.md](CLAUDE.md).
+```
+lib/features/my-tool/
+├── index.js      # { name, definition, schema, logFields, handler }
+└── helper.js     # opcional: lógica que solo usa esta tool
+```
 
+```js
+// lib/features/my-tool/index.js
+import { z } from "zod";
+import { success } from "../../shared/mcp/results.js";
+import { httpUrl } from "../../shared/mcp/schema-types.js";
 
-- **Privacy first.** Never add a code path that sends traffic or DNS queries outside the Tor proxy, and never log request bodies, cookies or session ids. If a change weakens a guarantee in [SECURITY.md](SECURITY.md), say so in the PR and make the new behaviour opt-in.
-- **Keep dependencies minimal.** Prefer Node's standard library. Add a dependency only when it replaces security-sensitive code that is hard to get right, as `tough-cookie` does.
-- **Add tests with every change.** Bug fixes come with a regression test.
-- **Respect the layering.** Features use `context.web` and never import undici. Code in `shared/` never reads `process.env` and never imports from `features/`. A helper used by only one tool belongs in that tool's folder.
-- **Match the existing style**: ES modules, 2-space indentation, double quotes, small functions, and comments that explain *why*.
-- **Write clear commit messages**, e.g. `fix: ...`, `feat: ...` or `docs: ...`.
+const inputShape = { url: httpUrl.describe("URL a consultar") };
 
-## Pull requests
+export const myTool = {
+  name: "my_tool",
+  definition: { title: "My Tool", description: "Qué hace, en una frase.", inputSchema: inputShape },
+  schema: z.object(inputShape).strict(),
+  logFields: (input) => ({ url: input.url }),
+  handler: myToolHandler
+};
 
-1. Fork the repository and create a branch.
-2. Make sure `npm run check` and `npm test` pass.
-3. Update `README.md` and `CHANGELOG.md` when behaviour or configuration changes.
-4. Open the PR and describe what changed and why.
+export async function myToolHandler({ url }, { web }) {
+  const destination = await web.assertAllowed(url);
+  return web.run(async (circuit) => {
+    const { response } = await web.fetch(circuit, destination);
+    return { done: true, result: success(await web.readText(response)) };
+  });
+}
+```
 
-Security issues are handled privately. See [SECURITY.md](SECURITY.md#reporting-a-vulnerability).
+### 2. Escribe los tests (antes de la implementación, si haces TDD)
+
+En `test/features/`, usa `createTestContext()` para tener el cableado de producción sin Tor, y `startServer()` para levantar un sitio falso.
+
+### 3. Regístrala
+
+Añade la tool a la lista en `lib/features/index.js`.
+
+### 4. Actualiza la documentación (regla anti-drift)
+
+En el mismo PR actualiza:
+- `README.md` y `README.en.md` (tabla de tools);
+- `docs/CLIENTS.md` (referencia de parámetros);
+- `CHANGELOG.md`.
+
+**Un PR que cambia tools sin actualizar la documentación se rechaza.**
+
+### 5. Abre el PR
+
+---
+
+## 🚫 Lo que NO va a entrar
+
+Estos cambios no se aceptan sin un issue previo con un caso de uso real:
+
+- Cualquier ruta de red que no pase por el proxy SOCKS: fallback directo, DNS local por defecto, telemetría.
+- Ejecución de JavaScript o navegadores headless.
+- Selección del país de salida.
+- Logging de cuerpos, cookies o `session_id`.
+- Dependencias pesadas para resolver algo que se puede hacer en unas pocas líneas.
+
+---
+
+## 🤔 Preguntas frecuentes
+
+**¿Necesito Tor para desarrollar?**
+No. Toda la suite corre offline. Tor solo hace falta para `npm run doctor` y `npm run smoke`.
+
+**¿Por qué no se usa `fetch` directamente en las features?**
+Porque así no se podrían testear sin red, y porque `context.web` garantiza que todo pase por Tor, con reintentos y validación de destino.
+
+**¿Dónde reporto una vulnerabilidad?**
+En privado, desde la pestaña Security del repo. Consulta [`SECURITY.md`](SECURITY.md).
+
+---
+
+## 📜 Código de conducta
+
+Sé respetuoso y constructivo. Critica el código, no a las personas. Las contribuciones de cualquier nivel son bienvenidas.
