@@ -1,18 +1,22 @@
-## What changes and why?
+## ¿Qué cambia y por qué?
 
-<!-- Use a Conventional Commit title (feat:/fix:/refactor:/test:/docs:/chore:).
-     Explain the WHY here — the diff already shows the what. -->
+<!-- Título del PR en formato Conventional Commit (feat:/fix:/refactor:/test:/docs:/chore:).
+     Primera línea de 72 caracteres como máximo.
+     Aquí: explica el POR QUÉ, no el qué; el diff ya muestra el qué. -->
 
-## How did you test it?
+## ¿Cómo lo probaste?
 
-<!-- Concrete steps and the exact commands you ran. -->
+<!-- Pasos concretos. Incluye los comandos exactos que ejecutaste.
+     Si toca la red, indica si lo probaste con Tor real (`npm run smoke`). -->
 
 ---
 
 ## Checklist
 
-- [ ] Tests cover all new logic (no tests = no merge)
-- [ ] `npm run check` and `npm test` pass
-- [ ] Layering respected: features use `context.web`; `shared/` never reads `process.env` (enforced by `test/architecture.test.js`)
-- [ ] No new traffic or DNS outside Tor, and no new logging of bodies, cookies or session ids
-- [ ] `README.md` and `CHANGELOG.md` updated if tools or configuration changed
+- [ ] Hay tests para toda la lógica nueva (sin tests = sin merge)
+- [ ] `npm run lint`, `npm run check` y `npm test` pasan
+- [ ] El título del PR está en formato Conventional Commit
+- [ ] Identificadores en **inglés**; commits en **español** (o en inglés si es más claro)
+- [ ] Una tool nueva = una carpeta nueva en `lib/features/`; no se modificaron otras slices
+- [ ] Nada de tráfico ni DNS fuera de Tor, y nada de logs nuevos de cuerpos, cookies o `session_id`
+- [ ] Docs actualizadas si cambian tools o variables: `README.md`, `README.en.md`, `docs/` y `CHANGELOG.md`

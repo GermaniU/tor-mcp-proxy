@@ -34,14 +34,19 @@
     "index.js",
     "lib/",
     "README.md",
+    "README.en.md",
     "SECURITY.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "lint": "eslint .",
     "check": "node scripts/check-syntax.js",
     "test": "node --test \"test/**/*.test.js\"",
+    "doctor": "node scripts/doctor.js",
+    "smoke": "node scripts/smoke.js",
     "list-tools": "node scripts/list-tools.js"
   },
   "dependencies": {
@@ -49,5 +54,10 @@
     "tough-cookie": "^6.0.2",
     "undici": "^8.11.2",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0"
   }
 }

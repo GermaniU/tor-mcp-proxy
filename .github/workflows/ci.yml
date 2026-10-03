@@ -9,18 +9,58 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  lint:
+    name: Lint (ESLint)
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Chequeo de sintaxis
+        run: npm run check
+
+  test:
+    name: Tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: lint
     strategy:
+      fail-fast: false
       matrix:
         node-version: ["22.19.0", "24"]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npm test
-      - run: npm audit --omit=dev --audit-level=high
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests (unit + integración + MCP, sin red)
+        run: npm test
+
+  audit:
+    name: Auditoría de dependencias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: npm audit (producción, severidad alta)
+        run: npm audit --omit=dev --audit-level=high
