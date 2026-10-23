@@ -6,7 +6,7 @@ Esta guía cubre la instalación de Tor y del servidor, todas las variables de e
 
 ## Requisitos
 
-- **Node.js 22.19 o superior.** Compruébalo con `node -v`.
+- **Node.js 22.23.4, 24.22.1 o 26.12.1 o superior.** Compruébalo con `node -v`. Las versiones anteriores confían en la raíz `emSign ECC Root CA - G3`, retirada en octubre de 2026 por claves de intermedias comprometidas.
 - **Tor** corriendo localmente con su proxy SOCKS5. Por defecto escucha en `127.0.0.1:9050`.
 - Un cliente MCP: Claude Code, Claude Desktop, Cursor, OpenCode, etc.
 
@@ -111,7 +111,8 @@ Configuración
   · Log de auditoría:     desactivado
 
 Entorno
-  ✓ Node.js 22.19.0
+  ✓ Node.js 24.22.1
+  ✓ El almacén TLS de Node no confía en las raíces emSign retiradas
   ✓ El directorio de descargas es escribible
 
 Tor

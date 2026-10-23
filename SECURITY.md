@@ -31,6 +31,10 @@ Este documento explica qué protege `tor-mcp-proxy`, qué **no** protege y cómo
 - **Un equipo o un cliente MCP comprometido.** El servidor confía en lo que le envía tu cliente MCP.
 - **El contenido de las páginas.** Se devuelve a la IA como texto. Trátalo como entrada no confiable, porque puede contener intentos de prompt injection.
 
+### Versión mínima de Node.js y almacén de certificados
+
+El HTTPS de clearnet se verifica con el almacén de raíces que trae Node.js, y el nodo de salida de Tor está en medio de la conexión. Usa Node.js 22.23.4, 24.22.1 o 26.12.1 o superior: las versiones anteriores confían en `emSign ECC Root CA - G3`, cuyas intermedias TLS tenían claves privadas recuperables (octubre de 2026), y no bloquean esas claves. `npm run doctor` lo comprueba.
+
 ### `.onion` y TLS
 
 Las direcciones `.onion` ya autentican criptográficamente al servidor, así que **no** se verifican los certificados HTTPS de los hosts `.onion`. Muchos servicios ocultos usan certificados autofirmados. Esta relajación solo aplica a los hosts `.onion` y usa un dispatcher separado; el HTTPS de clearnet siempre se verifica de forma estricta.

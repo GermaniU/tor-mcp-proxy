@@ -6,6 +6,9 @@ Todos los cambios relevantes de este proyecto se documentan aquí. El formato se
 
 ## [Unreleased]
 
+### Seguridad
+- Versión mínima de Node.js: 22.23.4, 24.22.1 o 26.12.1. Las anteriores confían en `emSign ECC Root CA - G3` y no bloquean las claves de las intermedias eMudhra comprometidas, así que un nodo de salida de Tor podría suplantar sitios HTTPS. `npm run doctor` y la suite de tests lo verifican; la CI prueba los mínimos parcheados con `check-latest`.
+
 ### Documentación y estructura alineadas con mcp-memory
 - El README principal está ahora en español, con espejo en inglés en `README.en.md`.
 - Nuevos `docs/INSTALL.md` (instalación por sistema operativo y todas las variables) y `docs/CLIENTS.md` (configuración por cliente y referencia de las tools).

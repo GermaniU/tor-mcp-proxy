@@ -6,7 +6,7 @@ Convenciones del proyecto para las sesiones de Claude Code y otros asistentes.
 
 ## Stack
 
-- **Node.js 22.19+** con ES modules. Usa el SDK MCP por stdio, undici (SOCKS5), zod y tough-cookie.
+- **Node.js 22.23.4+ / 24.22.1+ / 26.12.1+** con ES modules. Usa el SDK MCP por stdio, undici (SOCKS5), zod y tough-cookie.
 - **Arquitectura vertical slice:**
   - cada tool vive en `lib/features/<tool>/`;
   - el núcleo compartido está en `lib/shared/`;
