@@ -7,7 +7,7 @@
 Cada tool MCP es una **slice vertical**: su schema, su handler y sus helpers privados viven juntos en una carpeta. Todo lo compartido está en un núcleo pequeño, y una única raíz de composición conecta las piezas. Las dependencias solo apuntan hacia dentro: `app → features → shared`.
 
 ```
-index.js                       entrada stdio (3 líneas)
+index.js                       entrada stdio; rechaza runtimes sin corregir antes de abrirla
 lib/
 ├── app/                       raíz de composición: el único lugar que conoce las clases concretas
 │   ├── config.js              lee las variables de entorno → objeto inmutable

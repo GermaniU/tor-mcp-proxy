@@ -33,7 +33,20 @@ Este documento explica qué protege `tor-mcp-proxy`, qué **no** protege y cómo
 
 ### Versión mínima de Node.js y almacén de certificados
 
-El HTTPS de clearnet se verifica con el almacén de raíces que trae Node.js, y el nodo de salida de Tor está en medio de la conexión. Usa Node.js 22.23.4, 24.22.1 o 26.12.1 o superior: las versiones anteriores confían en `emSign ECC Root CA - G3`, cuyas intermedias TLS tenían claves privadas recuperables (octubre de 2026), y no bloquean esas claves. `npm run doctor` lo comprueba.
+El HTTPS de clearnet se verifica con el almacén de raíces que trae Node.js, y el nodo de salida de Tor está en medio de la conexión. Usa Node.js 22.23.4, 24.22.1 o 26.12.1 o superior: las versiones anteriores confían en `emSign ECC Root CA - G3`, cuyas intermedias TLS tenían claves privadas recuperables (octubre de 2026), y no bloquean esas claves.
+
+La comprobación es obligatoria: antes de abrir stdio, `index.js` se niega a arrancar si la versión de Node.js no está corregida o si su almacén todavía incluye `emSign ECC Root CA - G3`, `emSign Root CA - C1` o `emSign ECC Root CA - C3`. Escribe el motivo en stderr, termina con código 1 y no envía nada por stdout, así que el cliente MCP ve un servidor que no arranca en lugar de uno que acepta certificados falsificados. `npm run doctor` sigue funcionando en ese runtime para diagnosticar el problema. `engines` en `package.json` solo produce un aviso de npm.
+
+### Dependencias forzadas (`overrides`)
+
+`package.json` fuerza dos dependencias transitivas del SDK MCP a versiones corregidas. Ambas están dentro del rango que ya declara su paquete padre, así que el override solo fija el mínimo:
+
+| Paquete | Mínimo forzado | Lo trae | Retirar cuando |
+|---|---|---|---|
+| `proxy-addr` | 2.0.8 | `express` (`^2.0.7`) | `express` declare `proxy-addr` ≥ 2.0.8, o `npm audit` siga limpio sin el override. |
+| `ip-address` | 10.7.4 | `express-rate-limit` (`^10.2.0`) | `express-rate-limit` declare `ip-address` ≥ 10.7.4, o `npm audit` siga limpio sin el override. |
+
+Para comprobarlo, quita el override, ejecuta `npm install` y después `npm audit --omit=dev`. El resto de dependencias se corrige solo con el lockfile, sin overrides.
 
 ### `.onion` y TLS
 

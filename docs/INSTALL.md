@@ -173,6 +173,10 @@ El servidor no guarda nada más en disco.
 
 ## Troubleshooting
 
+**El cliente no conecta y stderr dice `tor-mcp-proxy: refusing to start`**
+- Tu Node.js no tiene la corrección de la CA emSign (o su almacén aún confía en las raíces retiradas). El servidor se niega a arrancar a propósito.
+- Actualiza a Node.js 22.23.4, 24.22.1 o 26.12.1 o superior y confirma con `npm run doctor`. Si tu cliente usa otro `node` que el de tu terminal, pon la ruta absoluta del Node.js corregido en su configuración.
+
 **`npm run doctor` dice "Nada escucha en 127.0.0.1:9050"**
 - Tor no está corriendo. Inícialo con `brew services start tor` en macOS o con `sudo systemctl start tor` en Linux.
 - Si usas Tor Browser, el puerto es `9150`.
