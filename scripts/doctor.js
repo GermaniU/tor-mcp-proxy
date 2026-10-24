@@ -5,6 +5,7 @@ import { access, constants, mkdir } from "node:fs/promises";
 import { connect } from "node:net";
 import { loadConfig } from "../lib/app/config.js";
 import { createContext } from "../lib/app/server.js";
+import { distrustedBundledRoots, isPatchedNode } from "../lib/shared/net/trust.js";
 
 const config = loadConfig();
 const context = createContext(config);
@@ -27,9 +28,11 @@ info(`Directorio descargas: ${config.downloadDir}`);
 info(`Log de auditoría:     ${config.logPath || "desactivado"}`);
 
 console.log("\nEntorno");
-const [major, minor] = process.versions.node.split(".").map(Number);
-if (major > 22 || (major === 22 && minor >= 19)) ok(`Node.js ${process.versions.node}`);
-else fail(`Node.js ${process.versions.node}`, "Se requiere Node.js 22.19 o superior.");
+if (isPatchedNode()) ok(`Node.js ${process.versions.node}`);
+else fail(`Node.js ${process.versions.node}`, "Se requiere Node.js 22.23.4, 24.22.1 o 26.12.1 o superior (corrige la CA emSign comprometida).");
+const distrusted = distrustedBundledRoots();
+if (distrusted.length === 0) ok("El almacén TLS de Node no confía en las raíces emSign retiradas");
+else fail(`Node confía en raíces retiradas: ${distrusted.join(", ")}`, "Actualiza Node.js; un nodo de salida de Tor podría suplantar sitios HTTPS.");
 
 try {
   await mkdir(config.downloadDir, { recursive: true, mode: 0o700 });

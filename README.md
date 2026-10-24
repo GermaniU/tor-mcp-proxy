@@ -11,7 +11,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-stdio-green)](https://modelcontextprotocol.io)
-[![Node.js](https://img.shields.io/badge/Node.js-22.19+-5FA04E?logo=nodedotjs&logoColor=white)](package.json)
+[![Node.js](https://img.shields.io/badge/Node.js-22.23.4+%20%7C%2024.22.1+%20%7C%2026.12.1+-5FA04E?logo=nodedotjs&logoColor=white)](package.json)
 [![CI](https://github.com/GermaniU/tor-mcp-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/GermaniU/tor-mcp-proxy/actions/workflows/ci.yml)
 [![Tor](https://img.shields.io/badge/Network-Tor%20SOCKS5-7D4698?logo=torproject&logoColor=white)](https://www.torproject.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -38,7 +38,7 @@ git clone https://github.com/GermaniU/tor-mcp-proxy.git && cd tor-mcp-proxy && n
 claude mcp add tor-proxy --scope user -- node "$PWD/index.js"
 ```
 
-Requiere **Node.js 22.19+** y Tor escuchando en `127.0.0.1:9050`. Para otros clientes, consulta [`docs/CLIENTS.md`](docs/CLIENTS.md). Para otros sistemas operativos, consulta [`docs/INSTALL.md`](docs/INSTALL.md).
+Requiere **Node.js 22.23.4+, 24.22.1+ o 26.12.1+** y Tor escuchando en `127.0.0.1:9050`. Para otros clientes, consulta [`docs/CLIENTS.md`](docs/CLIENTS.md). Para otros sistemas operativos, consulta [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ### 🔍 Diagnóstico
 
